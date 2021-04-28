@@ -70,13 +70,53 @@ function getTopicPage(name,url)
                             });
                     }
 
-                    
+                    getIssuesPage(projectTitle, name, projectLink + "/issues");
                 }
 
-                fs.writeFileSync("data.json", JSON.stringify(data));
+                //fs.writeFileSync("data.json", JSON.stringify(data));
             }
     });
     
 }
 
-request("https://github.com/topics",linkGenerator); // callBack function
+function getIssuesPage(projectName, topicName, url)
+{
+    request(url, function (error, res, body)
+    {
+        if(!error)
+        {
+            $ = cheerio.load(body);
+
+            let allIssues = $(".Link--primary.v-align-middle.no-underline.h4.js-navigation-open");
+
+            for(let x = 0; x < allIssues.length; x++)
+            {
+                let issueURL = "https://github.com/" + $(allIssues[x]).attr("href");
+                
+                let issueTitle = $(allIssues[x]).text().trim();
+
+                let index = -1;
+
+                for(let i = 0; i < data[topicName].length; i++)
+                {
+                    if(data[topicName][i].name === projectName)
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+
+                if(!data[topicName][index].issues)
+                {
+                    data[topicName][index].issues = [{ issueTitle , issueURL}];
+                }
+                else{
+                    data[topicName][index].issues.push = [{ issueTitle , issueURL}];
+                }
+            }
+            fs.writeFileSync("data.json", JSON.stringify(data));
+
+
+        }
+    });
+}
