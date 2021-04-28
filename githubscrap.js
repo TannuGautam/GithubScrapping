@@ -3,7 +3,7 @@ const cheerio = require("cheerio");
 let fs = require("fs");
 let $;
 let data = {};
-
+const { jsPDF } = require("jsPDF");
 
 function linkGenerator(error, response, body)
 {
@@ -116,7 +116,48 @@ function getIssuesPage(projectName, topicName, url)
             }
             fs.writeFileSync("data.json", JSON.stringify(data));
 
+            pdfGenerator(data);
 
         }
     });
+}
+
+
+request("https://github.com/topics",linkGenerator); // callBack function
+
+//storing issues title n URL in pdf with help of jsPDF
+function pdfGenerator(d)
+{
+    for( x in d)
+    {
+        if(!fs.existsSync(x))
+        {
+            fs.mkdirSync(x);
+            //created folder
+        }
+
+        let path = "./" + x + "/";
+
+        for( y in d[x])
+        {
+            const doc = new jsPDF();
+
+            let issueArr = d[x][y].issues;
+
+            let spacing = 1;
+
+            for(z in issueArr)
+            {
+                doc.text("issueArr[z].issueTitle", 10, 10 * spacing);
+                //these nos. are margin left and top respectively
+                doc.text("issueArr[z].issueURL", 10, 10 * spacing + 5);
+
+                spacing++;
+            }
+
+            if(fs.existsSync(path + d[x][y].name + ".pdf"))
+                fs.unlinkSync(path + d[x][y].name + ".pdf");
+            doc.save(path + d[x][y].name + ".pdf");
+        }
+    }
 }
