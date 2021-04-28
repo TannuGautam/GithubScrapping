@@ -3,11 +3,11 @@ const cheerio = require("cheerio");
 let fs = require("fs");
 let $;
 let data = {};
-const { jsPDF } = require("jsPDF");
+const { jsPDF } = require("jspdf");
 
 function linkGenerator(error, response, body)
 {
-    if(!error)
+    if(!error && response.statusCode == 200)
     {
         $ = cheerio.load(body);
 
@@ -83,11 +83,12 @@ function getIssuesPage(projectName, topicName, url)
 {
     request(url, function (error, res, body)
     {
-        if(!error)
+        if(!error && res.statusCode == 200)
         {
             $ = cheerio.load(body);
 
             let allIssues = $(".Link--primary.v-align-middle.no-underline.h4.js-navigation-open");
+
 
             for(let x = 0; x < allIssues.length; x++)
             {
@@ -111,10 +112,12 @@ function getIssuesPage(projectName, topicName, url)
                     data[topicName][index].issues = [{ issueTitle , issueURL}];
                 }
                 else{
-                    data[topicName][index].issues.push = [{ issueTitle , issueURL}];
+                    data[topicName][index].issues.push({issueTitle , issueURL});
                 }
             }
             fs.writeFileSync("data.json", JSON.stringify(data));
+
+            //console.log(issueTitle);
 
             pdfGenerator(data);
 
@@ -148,15 +151,15 @@ function pdfGenerator(d)
 
             for(z in issueArr)
             {
-                doc.text("issueArr[z].issueTitle", 10, 10 * spacing);
+                doc.text(issueArr[z].issueTitle, 10, 10 * spacing);
                 //these nos. are margin left and top respectively
-                doc.text("issueArr[z].issueURL", 10, 10 * spacing + 5);
+                doc.text(issueArr[z].issueURL, 10, 10 * spacing + 5);
 
                 spacing++;
             }
 
             if(fs.existsSync(path + d[x][y].name + ".pdf"))
-                fs.unlinkSync(path + d[x][y].name + ".pdf");
+             fs.unlinkSync(path + d[x][y].name + ".pdf");
             doc.save(path + d[x][y].name + ".pdf");
         }
     }
